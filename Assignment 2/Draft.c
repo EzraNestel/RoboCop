@@ -100,18 +100,52 @@ void exercise_2()
 
 void exercise_3()
 {
+    enum T_test_state {
+        OFF,
+        FORWARDS,
+        BACKWARDS,
+    };
+    T_test_state test_state = OFF;//starts motor not moving
     while(true)
     {
         monitorInput();
-        
-        
-        /* INSERT CODE HERE
-         * - make sure EXERCISE_NUMBER is set to 3
-         */
-        
-        
+    switch(test_state){
+
+        case OFF:
+            motor[motor1] = 0;
+            if(button1_pushed){
+                test_state = FORWARDS;
+                button1_pushed = false;//reset button 1
+                break;
+            } else if(button2_pushed){
+                test_state = BACKWARDS;
+                button2_pushed = false;//reset button 2
+                break;
+            }
+
+        case FORWARDS:
+            motor[motor1] = 50;//Turns motor forward
+            if(button2_pushed && getMotorEncoder(motor1) >= 3000) {
+                test_state = BACKWARDS;
+                resetMotorEncoder(motor1);
+                button2_pushed = false;//reset button 2
+                break;
+            }
+
+        case BACKWARDS:
+            motor[motor1] = -50;//Turns motor backwards
+            if(button1_pushed){
+                test_state = FORWARDS;
+                button1_pushed = false;//reset button 1
+                break;
+            }
+        default:
+            printf("It should never reach here");
+            break;
+        }
+
     }//end while
-    
+
 }//end exercse_3
 
 
