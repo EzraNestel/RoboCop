@@ -22,28 +22,34 @@ bool set_motor( int target )
 	//Max motor speed
 	int max = 150;
 
-	//accuracy
+	//Accuracy for positioning
 	int acc = 10;
 
 	// Find if current position is lower or higher than current position.
 	if ( delta > max ) {
+		// If delta is greater than max set delta to max
 		delta = max;
 
-  } else if ( delta < -max ) {
+  	} else if ( delta < -max ) {
+		// If delta is lower than negative max set delta to negative max
 		delta = -max;
 
+  	}// if
 
-  }
-
-  if (-acc<=delta && delta<=acc) {
-  	motor[motor1]=0;
+  	if (-acc<=delta && delta<=acc) {
+  		//If delta is between both accuracy points turn off motor
+  		motor[motor1]=0;
+  		// Tell main set_motor function is completed
  		return(true)
-	} else {
-		motor[motor1] = delta/4;
-    return false;
-  }
 
-}
+	} else {
+  		// If the motor is out of accuracy bounds move motor according to delta value
+		motor[motor1] = delta/4;
+		// Return false to let main know we have not yet reached the desired position
+    	return false;
+  	}// if
+
+}// set_motor
 
 task main()
 {

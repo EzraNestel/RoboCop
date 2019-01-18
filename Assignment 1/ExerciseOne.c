@@ -13,7 +13,7 @@ int total_trials = 1000;
 // Storage of number of guesses.
 int total_meas = 0;
 int correct_guess = 0;
-
+ 
 /**********************************************************
 ** int resolve_measurement( int meas_point )
 ** Resolve Measurement at set point.
@@ -101,11 +101,14 @@ task main()
 		// Current measurement point set to lowest value.
 		int current_meas_point = min_v;
 		// Estimation code here.
-		// Sweep through range from lowest to highest possible value.
-		// Stop when measurment_point matches true value.
+
+		// Stop when measurement_point matches true value.
 		while( true ) {
 
+			//Set current measuring point to the middle of the highest and lowest possible values
 			current_meas_point  = (max_v+min_v)/2;
+
+			//Get value whether or not the current measurement is higher(1), lower(-1), or equal(0) to actual value
 			int result = resolve_measurement(current_meas_point);
 
 			if (result == 1) {
@@ -115,11 +118,11 @@ task main()
 				min_v = current_meas_point + 1;
 
 			} else {
-				//correct_guess = current_meas_point;
-				break;
-			}
 
-		}
+				break; //Current measurement matches the actual value
+			}//if
+
+		}//while
 
 		// All modified code should be above this line.
 
