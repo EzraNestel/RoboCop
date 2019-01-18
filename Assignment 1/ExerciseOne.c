@@ -87,7 +87,7 @@ task main()
 	// For each trial
 	for ( current_trial = 1; current_trial <= total_trials ; current_trial++ ) {
 
-		// Generate new value to measure
+		//  Generate new value to measure
 		true_value = resolve_measurement(-1);
 
 		// Range to search for true value
