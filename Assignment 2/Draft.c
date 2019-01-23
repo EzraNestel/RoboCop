@@ -96,17 +96,77 @@ void exercise_2()
 } // end exercise_2
 
 void exercise_3()
-{
+{	
+	enum T_motor_state {
+		OFF = 0,
+		FORWARD,
+		BACKWARD
+	};
+
+	// Create motor state
+	T_motor_state motor_state = OFF;
+
     while(true)
     {
         monitorInput();
         
-        
-        /* INSERT CODE HERE
-         * - make sure EXERCISE_NUMBER is set to 3
-         */
-        
-        
+		//Figure out what state to switch into then execute the right case
+
+		if(button1_pushed) {
+			// Set motor to run forward
+			motor_state = FORWARD;
+
+		} else if (button2_pushed) {
+			// Set motor to run backward
+			motor_state = BACKWARD;
+
+		} else {
+			motor_state = OFF;
+		}//if
+
+		switch (motor_state)
+		{
+			case OFF:
+				// motor is not running 
+				//do nothing
+				break;
+
+			case FORWARD:
+				// Motor is travelling forward direction
+				while(getMotorEncoder(motor1) >= -3000){
+					motor[motor1] = -50;
+
+					// monitorInput to see if other button is pressed
+					monitorInput();
+				}
+				
+				// Reset encoder 
+				resetMotorEncoder(motor1);
+				motor[motor1] = 0;
+
+				//turn off button variable to prevent accidental switch into FORWARD again
+				button2_pushed = false;
+				break;
+
+			case BACKWARD:
+				// Motor travel backwards
+				while(getMotorEncoder(motor1) <= 3000){
+						motor[motor1] = 50;
+
+						// monitorInput to see if other button is pressed
+						monitorInput();
+					}
+				
+				// Reset encoder 
+				resetMotorEncoder(motor1);
+				motor[motor1] = 0;
+
+				//turn off button variable to prevent accidental switch into FORWARD again
+				button1_pushed = false;
+				break;
+			default:
+				//Shouldn't happen
+        }
     }//end while
     
 }//end exercse_3
