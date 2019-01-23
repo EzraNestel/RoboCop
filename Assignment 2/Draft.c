@@ -110,38 +110,44 @@ void exercise_3()
     {
         monitorInput();
         
-		//Figure out what state to switch into then execute the right case
-
-		if(button1_pushed) {
+		//Figure out what state to switch into then execute the right case statement
+		//If motor is off OR running backwards allow for state to change to FORWARD
+		if((button1_pushed && motor_state == OFF) || (button1_pushed && motor_state == BACKWARD)) {
 			// Set motor to run forward
 			motor_state = FORWARD;
 
-		} else if (button2_pushed) {
+			// If the motor is off OR running forwards allow for it to switch to backwards
+		} else if ((button2_pushed && motor_state == OFF) || (button1_pushed && motor_state == FORWARD)) {
 			// Set motor to run backward
 			motor_state = BACKWARD;
 
 		} else {
+			//If neither button is pressed keep state as OFF
 			motor_state = OFF;
 		}//if
+
 
 		switch (motor_state)
 		{
 			case OFF:
 				// motor is not running 
-				//do nothing
+				// Maintain motor at 0 speed
+				motor[motor1] = 0;
 				break;
 
 			case FORWARD:
 				// Motor is travelling forward direction
-				while(getMotorEncoder(motor1) >= -3000){
-					motor[motor1] = -50;
+				while(getMotorEncoder(motor1) <= 3000){
+					motor[motor1] = 50;
 
 					// monitorInput to see if other button is pressed
 					monitorInput();
-				}
+				}// while
 				
 				// Reset encoder 
 				resetMotorEncoder(motor1);
+
+				//stop motor before moving to next state
 				motor[motor1] = 0;
 
 				//turn off button variable to prevent accidental switch into FORWARD again
@@ -150,8 +156,8 @@ void exercise_3()
 
 			case BACKWARD:
 				// Motor travel backwards
-				while(getMotorEncoder(motor1) <= 3000){
-						motor[motor1] = 50;
+				while(getMotorEncoder(motor1) >= -3000){
+					motor[motor1] = -50;
 
 						// monitorInput to see if other button is pressed
 						monitorInput();
@@ -159,11 +165,13 @@ void exercise_3()
 				
 				// Reset encoder 
 				resetMotorEncoder(motor1);
+
 				motor[motor1] = 0;
 
 				//turn off button variable to prevent accidental switch into FORWARD again
 				button1_pushed = false;
 				break;
+
 			default:
 				//Shouldn't happen
         }
