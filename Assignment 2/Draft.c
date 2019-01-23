@@ -147,11 +147,11 @@ void exercise_3()
 				// Reset encoder 
 				resetMotorEncoder(motor1);
 
-				//stop motor before moving to next state
-				motor[motor1] = 0;
-
 				//turn off button variable to prevent accidental switch into FORWARD again
 				button2_pushed = false;
+
+				// Set motor_state to OFF so it wil not accidentally keep running forward 
+				motor_state = OFF;
 				break;
 
 			case BACKWARD:
@@ -166,10 +166,11 @@ void exercise_3()
 				// Reset encoder 
 				resetMotorEncoder(motor1);
 
-				motor[motor1] = 0;
-
-				//turn off button variable to prevent accidental switch into FORWARD again
+				//turn off button variable to prevent accidental switch into BACKWARD again
 				button1_pushed = false;
+
+				// Set motor_state to OFF so it wil not accidentally keep running backwards
+				motor_state = OFF;
 				break;
 
 			default:
