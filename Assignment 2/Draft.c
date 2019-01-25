@@ -79,7 +79,7 @@ void exercise_1()
 
 void exercise_2()
 {
-    
+    resetMotorEncoder(motor1);
     while(true)
     {
         monitorInput();
@@ -105,11 +105,11 @@ void exercise_3()
 
 	// Create motor state
 	T_motor_state motor_state = OFF;
-
+	
     while(true)
     {
         monitorInput();
-        
+        resetMotorEncoder(motor1);
 		//Figure out what state to switch into then execute the right case statement
 		//If motor is off OR running backwards allow for state to change to FORWARD
 		if((button1_pushed && motor_state == OFF) || (button1_pushed && motor_state == BACKWARD)) {
@@ -148,7 +148,7 @@ void exercise_3()
 				resetMotorEncoder(motor1);
 
 				//turn off button variable to prevent accidental switch into FORWARD again
-				button2_pushed = false;
+				button1_pushed = false;
 
 				// Set motor_state to OFF so it wil not accidentally keep running forward 
 				motor_state = OFF;
@@ -167,7 +167,7 @@ void exercise_3()
 				resetMotorEncoder(motor1);
 
 				//turn off button variable to prevent accidental switch into BACKWARD again
-				button1_pushed = false;
+				button2_pushed = false;
 
 				// Set motor_state to OFF so it wil not accidentally keep running backwards
 				motor_state = OFF;
