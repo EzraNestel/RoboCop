@@ -12,6 +12,7 @@
 
 bool button1_pushed; //flag to store button1 input
 bool button2_pushed; //flag to store button2 input
+bool button3_pushed; //flag to store button3 input
 
 void monitorInput()
 {
@@ -23,6 +24,11 @@ void monitorInput()
     if(SensorValue(button2) && !button2_pushed)
     {
         button2_pushed = true;
+    }
+	
+    if(SensorValue(button3) && !button3_pushed)
+    {
+        button3_pushed = true;
     }
 }
 
@@ -47,7 +53,7 @@ void drive()
 // Turn ~90 degrees
 void turn()
 {
-	    resetMotorEncoder(motor1);
+      resetMotorEncoder(motor1);
       resetMotorEncoder(motor2);
 
       while(getMotorEncoder(motor1) <= 550){
@@ -64,13 +70,24 @@ void turn()
       motor[motor1] = 0;
       motor[motor2] = 0;
 
-} // end exercise_turn
+} // end turn
+
+void lower_arm() //untested code
+{
+	resetMotorEncoder(motor3);
+	motor[motor3] = 40;
+	delay(2000);
+	motor[motor3] = 0;
+	button3_pushed = false;
+}// end lower_arm
 
 task main ()
 {
-	button1_pushed = button2_pushed = false;
-	      resetMotorEncoder(motor1);
+	button1_pushed = button2_pushed = button3_pushed = false;
+	resetMotorEncoder(motor1);
         resetMotorEncoder(motor2);
+	resetMotorEncoder(motor3);
+
 
 	while(true){
 			monitorInput();
@@ -80,5 +97,8 @@ task main ()
 		if(button1_pushed){
 			drive();
 			}
+		if(button3_pushed){
+			lower_arm(); 
+		  }
 	}//while
 }//main
