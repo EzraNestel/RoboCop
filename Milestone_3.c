@@ -35,6 +35,29 @@ void monitorInput()
     }
 }
 
+// Slows motor to correctly approach the designated encoder target
+void motorApproach(Motor motor_num, int start_speed, int target)
+{
+    
+    // 10% over/undershoot allowed
+    while (getMotorEncoder(motor_num) > target - target*.1 || getMotorEncoder(motor_num) < target + target*.1) {
+        
+        if (getMotorEncoder(motor_num) - target < 150) {
+            // If the motor is within 150 degrees of final location begin to slow down
+            motor[motor_num] = start_speed - getMotorEncoder(motor_num)/8;
+            
+        } else {
+            motor[motor_num] = start_speed;
+        } // if
+        
+    }
+    
+    // Stop Motor
+    motor[motor_num] = 0;
+    
+} // motorApproach
+
+
 // Drive ~1.0m
 
 void turn()
@@ -60,26 +83,21 @@ void turn()
 
 void lower_arm()
 {
-	resetMotorEncoder(motor3);
-	motor[motor3] = 30;
-	delay(800);
-	motor[motor3] = 0;
-	delay(500);
-	motor[motor3] = -40;
-	delay(200);
-	motor[motor3] = 0;
-	delay(600);
-		    resetMotorEncoder(motor1);
+    
+    // Check if arm is at original orientation
+    monitorInput();
+    if (arm_button == true) {
         resetMotorEncoder(motor3);
-
-        while(getMotorEncoder(motor1) >= -1000){
-            motor[motor1] = -75 + getMotorEncoder(motor1)/30;
-            motor[motor2] = 75 - getMotorEncoder(motor1)/30;
-          }
-          motor[motor1] = 0;
-          motor[motor2] = 0;
-	button3_pushed = false;
-
+    } else {
+        while (arm_button == false) {
+            monitorInput();
+            motor[motor3] = -30; // Assuming the motor turning backwards will lift arms
+        }
+        resetMotorEncoder(motor3);
+    }
+    
+    // Move arm down
+    motorApproach(motor3, 60, 720);
 }// end lower_arm
 
 void drive()
