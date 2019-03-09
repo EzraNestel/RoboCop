@@ -17,6 +17,16 @@ int SHORT_IR_SENSOR_THRESHOLD = 500;
 const int OFF = 0;
 const int ON = 1;
 
+enum T_Operating_State = {
+    SEARCH_BEACON = 0,
+    DRIVE_TO_BEACON,
+    CONNECTION,
+    REVERSE,
+    STOP
+};
+
+int connection_dist = 13;
+
 // Perform processing of measurements.
 // Should be called with rate of at least 20 Hertz for proper detection of puck.
 int monitorLightShortRight()
@@ -154,8 +164,8 @@ int monitorLightLongLeft()
 
 void turn(int motor_speed)
 {
-     			motor[motor_right] = motor_speed;
-      		motor[motor_left] = -motor_speed;
+    motor[motor_right] = motor_speed;
+    motor[motor_left] = -motor_speed;
 } // end turn
 
 void operate_arm()
@@ -166,19 +176,17 @@ void operate_arm()
    resetMotorEncoder(motor_arm);
 
    while (getMotorEncoder(motor_arm) > forwardMovement) {
-       motor[motor_arm] = -30;
+       motor[motor_arm] = -25;
    }
 
 
-   // move arm forward set amount`
-   // finish`
-
-} // operateArm` (edited)
+} // operateArm
 
 
-void slow_drive(int speed)
+void slow_drive(int speed, int sensor_right, int sensor_left)
 {
-            while(SensorValue(sonarSensor) > 35  || SensorValue(sonarSensor) == -1)
+    /*
+        while(SensorValue(sonarSensor) > 35  || SensorValue(sonarSensor) == -1)
             	{
             		if (monitorLightShortRight() < monitorLightShortLeft()){
             		motor[motor_right] = -speed;
@@ -191,6 +199,18 @@ void slow_drive(int speed)
             		motor[motor_left] = -speed;
             	}//else
           }//while
+    */
+    
+        while (SensorValue(sonarSensor) > 15  || SensorValue(sonarSensor) == -1)
+        {
+            // If positive right side is getting stronger readings, need to move left
+            // If negative left side is getting stronger readings, need to move right
+            // Adjust division for less/more turning control
+            int steering = (sensor_right - sensor_left)/2;
+            
+            motor[motor_right] = speed - steering;
+            motor[motor_left]  = speed + steering;
+        }
         //stop motors
         motor[motor_right] = 0;
         motor[motor_left] = 0;
@@ -209,12 +229,12 @@ task main ()
 	int x = 0;
 	// Sets arm to starting position
 	while(SensorValue(armLimit) == OFF){
-		motor(motor_arm) = 40;
+		motor[motor_arm] = 30;
 	}
 	motor(motor_arm) = 0;
 
 	//infinite loop until beacon detected and lower arm executed
-while(true)
+    while(true)
 	{
 		int beacon_level_short_right = monitorLightShortRight();
 		int beacon_level_short_left = monitorLightShortLeft();
@@ -222,34 +242,37 @@ while(true)
 		int beacon_level_long_right = monitorLightLongRight();
 		int beacon_level_long_left = monitorLightLongLeft();
 
-			//checks whether beacon is in range for attachement
-	    if(beacon_level_short_right > SHORT_IR_SENSOR_THRESHOLD && SensorValue[sonarSensor] <= 10 && beacon_level_short_left > SHORT_IR_SENSOR_THRESHOLD){
-      	operate_arm();
-				break;
+        //checks whether beacon is in range for attachement
+	    if (beacon_level_short_right > SHORT_IR_SENSOR_THRESHOLD && SensorValue[sonarSensor] <= 10 && beacon_level_short_left > SHORT_IR_SENSOR_THRESHOLD){
+            operate_arm();
+            break;
 
-      //If beacon is > 30cms away drive is initiallized until within 30cms of beacon
-      }else if((beacon_level_short_right > SHORT_IR_SENSOR_THRESHOLD || beacon_level_short_left > SHORT_IR_SENSOR_THRESHOLD) && SensorValue[sonarSensor] > 17){
-      	slow_drive(25);
+        //If beacon is > 30cms away drive is initiallized until within 30cms of beacon
+        }else if((beacon_level_short_right > SHORT_IR_SENSOR_THRESHOLD || beacon_level_short_left > SHORT_IR_SENSOR_THRESHOLD) && SensorValue[sonarSensor] > 17){
+            slow_drive(25);
 
     	}else if((beacon_level_long_right > LONG_IR_SENSOR_THRESHOLD || beacon_level_long_left > LONG_IR_SENSOR_THRESHOLD) && SensorValue[sonarSensor] > 17){
     		slow_drive(35);
 
-      //If beacon is not in range robot turns until beacon is spotted
-      }else{
-				while(monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD && monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD && monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD && monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD){
-					if(x%2 == 0){
-					//alternates turning left and turning right
+            //If beacon is not in range robot turns until beacon is spotted
+        }else{
+            while(monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD && monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD && monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD && monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD)
+            {
+                if(x%2 == 0){
+                    //alternates turning left and turning right
 					//turns right
      			turn(25);
-     			}else {
-     			//turns left
-     			turn(-25);
+     			} else {
+                    //turns left
+                    turn(-25);
      			}
-				}//while
-				x =+ 1;
+            }//while
+            
+            x =+ 1;
      		//stops motors
      		motor[motor_right] = 0;
      		motor[motor_left] = 0;
+            
     	}//else
 	}//while
 }//main
