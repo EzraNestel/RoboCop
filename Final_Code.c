@@ -221,6 +221,15 @@ task main()
     while(operating_state != STOP)
     {
 
+        int beacon_level_short_right = monitorLightShortRight();
+        int beacon_level_short_left = monitorLightShortLeft();
+
+        int beacon_level_long_right = monitorLightLongRight();
+        int beacon_level_long_left = monitorLightLongLeft();
+
+        int sonar_value = SensorValue[sonarSensor];
+
+
         switch (operating_state) {
                 // Search for location of beacon
             case SEARCH_BEACON:
@@ -245,6 +254,7 @@ task main()
                 // Drive towards beacon
             case DRIVE_TO_BEACON:
 
+
 								// If no IR reading it returns to SEARCH_BEACON state
                 if (monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD &&
                     monitorLightShortLeft() < SHORT_IR_SENSOR_THRESHOLD  &&
@@ -254,18 +264,35 @@ task main()
                 	operating_state = SEARCH_BEACON;
                 }
                     if (SensorValue(sonarSensor) >= 15)
+
+                // If the short ir or long ir read the beacon drive toward
+            		// I don't think we even need this if statement since it only goes to this 
+            		// case if there is a reading and should leave this state if there is no reading
+                if (monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD ||
+                    monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD  ||
+                    monitorLightLongRight() > LONG_IR_SENSOR_THRESHOLD   ||
+                    monitorLightLongLeft() > LONG_IR_SENSOR_THRESHOLD)
+                {
+                    if (SensorValue(sonarSensor) > 15)
+
                     {
                         // Robot is over 15cm away from beacon
                     		if ( 	monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD ||
                     					monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD)
                     			{
                     				slow_drive(25, monitorLightShortRight(), monitorLightShortLeft());
+
                     				
                     			} else if (monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD ||
                     					monitorLightShortLeft() < SHORT_IR_SENSOR_THRESHOLD){
                     						
                     				slow_drive(35, monitorLightLongRight(), monitorLightLongLeft());
                     			}//else if
+
+                    			} else {
+                    				slow_drive(35, monitorLightLongRight(), monitorLightLongLeft());
+                    			}
+
 
                     } else if (SensorValue(sonarSensor) >= connection_dist - 3 && SensorValue(sonarSensor) <= connection_dist + 3)
                     	{
@@ -278,8 +305,18 @@ task main()
                     {
                         // Robot too close to beacon for connection
                     		// change to backup
+
                         operating_state = DRIVE_BACKUP;
                     }//if
+
+                        operating_state = CONNECTION;
+                    }//if
+
+                } else
+                {
+                    // Robot has lost track of the beacon revert back to search
+                    operating_state = SEARCH_BEACON;
+                } // if
 
                 break;
 
@@ -287,6 +324,7 @@ task main()
             case DRIVE_BACKUP:
                 // Backup until within range
                 // Endgoal to switch into connection state
+
             		if (monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD||
                     monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD ||
                     monitorLightLongRight() > LONG_IR_SENSOR_THRESHOLD  ||
@@ -305,6 +343,9 @@ task main()
                 						operating_state = SEARCH_BEACON;
                 					}
                 		}
+
+                operating_state = CONNECTION;
+
                 break;
 
                 // Operate the arm to make beacon connection
@@ -317,18 +358,24 @@ task main()
                // Reverse from the beacon
             case REVERSE:
                 //Drive backwards then switch into stop state
+
 		motor[motor_left] = 30;
 		motor[motor_right] = 30;
 		delay(800);
+
+
                 operating_state = STOP;
                 break;
 
                 // Stop operating, task finished
             case STOP:
+
             
             		motor[motor_left] = 0;
 			motor[motor_right] = 0;
 			// SensorValue(RedLED) = ON;
+
+
                 // Sound buzzers...
                 break;
                 // Should not happen
