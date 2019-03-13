@@ -171,30 +171,32 @@ void operate_arm()
    // Amount of rotations along small gear to move arm
    int forwardMovement = -800;
 
-   if (getMotorEncoder(motor_arm) > forwardMovement) {
+   if (getMotorEncoder(motor_arm) > forwardMovement)
+   {
        motor[motor_arm] = -30;
    }
    motor[motor_arm] = 0;
-   // move arm forward set amount`
-   // finish`
+} // operateArm
 
-} // operateArm` (edited)
 void slow_drive(int speed, int sensor_right, int sensor_left)
 {
-            // If positive right side is getting stronger readings, need to move left
-            // If negative left side is getting stronger readings, need to move right
-            // Adjust division for less/more turning control
+    // If positive right side is getting stronger readings, need to move left
+    // If negative left side is getting stronger readings, need to move right
+    // Adjust division for less/more turning control
 
-            		if (sensor_right < sensor_left - 20){
-            		motor[motor_right] = -speed;
-            		motor[motor_left] = -speed + 17;
-        			} else if (sensor_right > sensor_right + 20){
-        				motor[motor_right] = -speed + 15 ;
-            		motor[motor_left] = -speed;
-            	} else {
-            		motor[motor_right] = -speed - 4;
-            		motor[motor_left] = -speed;
-            	}//else
+    if (sensor_right < sensor_left - 20)
+    {
+        motor[motor_right] = -speed;
+        motor[motor_left] = -speed + 17;
+    } else if (sensor_right > sensor_right + 20)
+    {
+        motor[motor_right] = -speed + 15 ;
+        motor[motor_left] = -speed;
+    } else
+    {
+        motor[motor_right] = -speed - 4;
+        motor[motor_left] = -speed;
+    }//else
 } // end slow_drive
 
 // Copy everything below this comment
@@ -208,9 +210,19 @@ task main()
     resetMotorEncoder(motor_right);
     resetMotorEncoder(motor_left);
     clearTimer(T1);
-
+    
+    /*
+    //Wait for start switch to turn on
+    while(SensorValue(startSwitch) == OFF)
+    {
+        // Do nothing, just wait :)
+    }
+    */
+    
+    
     // Sets arm to starting position
-    while(SensorValue(armLimit) == OFF){
+    while(SensorValue(armLimit) == OFF)
+    {
         motor[motor_arm] = 30;
     } // while
 
@@ -326,27 +338,28 @@ task main()
                 // Endgoal to switch into connection state
 
             		if (monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD||
-                    monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD ||
-                    monitorLightLongRight() > LONG_IR_SENSOR_THRESHOLD  ||
-                    monitorLightLongLeft() > LONG_IR_SENSOR_THRESHOLD)
+                        monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD ||
+                        monitorLightLongRight() > LONG_IR_SENSOR_THRESHOLD  ||
+                        monitorLightLongLeft() > LONG_IR_SENSOR_THRESHOLD)
                     {
                     	if (SensorValue(sonarSensor) < connection_dist - 2)
                     	{
                     	slow_drive(-25, monitorLightShortRight(), monitorLightShortLeft());
                     
-                 			}	else if (SensorValue(sonarSensor) >= connection_dist - 3 && SensorValue(sonarSensor) <= connection_dist + 3)
-                  			{
-                				operating_state = CONNECTION;
+                        }	else if (SensorValue(sonarSensor) >= connection_dist - 3 && SensorValue(sonarSensor) <= connection_dist + 3)
+                        {
+                            operating_state = CONNECTION;
                 				
-                				} else 
-                					{
-                						operating_state = SEARCH_BEACON;
-                					}
-                		}
+                        }// else if
+                        
+                    }
+                    else
+                        {
+                            operating_state = SEARCH_BEACON;
+                		}// else (Beacon not in sight)
 
-                operating_state = CONNECTION;
-
-                break;
+                    operating_state = CONNECTION;
+                    break;
 
                 // Operate the arm to make beacon connection
             case CONNECTION:
@@ -359,10 +372,9 @@ task main()
             case REVERSE:
                 //Drive backwards then switch into stop state
 
-		motor[motor_left] = 30;
-		motor[motor_right] = 30;
-		delay(800);
-
+                motor[motor_left] = 30;
+                motor[motor_right] = 30;
+                delay(800);
 
                 operating_state = STOP;
                 break;
@@ -371,15 +383,14 @@ task main()
             case STOP:
 
             
-            		motor[motor_left] = 0;
-			motor[motor_right] = 0;
-			// SensorValue(RedLED) = ON;
-
-
+                motor[motor_left] = 0;
+                motor[motor_right] = 0;
+                // SensorValue(RedLED) = ON;
                 // Sound buzzers...
                 break;
-                // Should not happen
+    
             default:
+                // Should not happen
                 break;
         }
     } // while
