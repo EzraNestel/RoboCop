@@ -1,11 +1,11 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
-#pragma config(Sensor, in4,    LEFT_IR_LONG,   sensorReflection)
-#pragma config(Sensor, in3,    RIGHT_IR_LONG,  sensorReflection)
+#pragma config(Sensor, in1,    LEFT_IR_LONG,   sensorReflection)
 #pragma config(Sensor, in2,    RIGHT_IR_SHORT, sensorReflection)
-#pragma config(Sensor, in1,    LEFT_IR_SHORT,  sensorReflection)
+#pragma config(Sensor, in3,    RIGHT_IR_LONG,  sensorReflection)
+#pragma config(Sensor, in4,    LEFT_IR_SHORT,  sensorReflection)
 #pragma config(Sensor, dgtl1,  RedLED,         sensorDigitalOut)
-#pragma config(Sensor, dgtl2,  BlueLED,         sensorDigitalOut)
-#pragma config(Sensor, dgtl3,  YellowLED,         sensorDigitalOut)
+#pragma config(Sensor, dgtl2,  BlueLED,        sensorDigitalOut)
+#pragma config(Sensor, dgtl3,  YellowLED,      sensorDigitalOut)
 #pragma config(Sensor, dgtl4,  sonarSensor,    sensorSONAR_cm)
 #pragma config(Sensor, dgtl9,  armLimit,       sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
@@ -193,18 +193,20 @@ task main()
                 if (monitorLightLongRight() >= LONG_IR_SENSOR_THRESHOLD  ||
                     monitorLightLongLeft() >= LONG_IR_SENSOR_THRESHOLD)
                 {
-                	resetMotorEncoder(motor_arm);
+                	
                     // Sensor has found the robot
                     motor[motor_right] = 0;
                     motor[motor_left] = 0;
+                    delay(300);
                     operating_state = DRIVE_TO_BEACON;
+                    break;
 
                 } else if(monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD  &&
                     			monitorLightLongLeft() < LONG_IR_SENSOR_THRESHOLD)
                 {
                     motor[motor_right] = 25;
                     motor[motor_left] = -25;
-                    // operating_state = SEARCH_BEACON;
+                    operating_state = SEARCH_BEACON;
                 }
                 break;
 
@@ -214,8 +216,8 @@ task main()
 								int short_dif = monitorLightShortRight() - monitorLightShortLeft();
 								int long_dif = monitorLightLongRight() - monitorLightLongLeft();
 
-								int pos_threshold = 60;
-								int neg_threshold = -60;
+								int pos_threshold = 50;
+								int neg_threshold = -50;
 
 
 								// If no IR reading it returns to SEARCH_BEACON state
@@ -230,34 +232,38 @@ task main()
                 		monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD &&
                 		monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD)
                 		{
-                		motor[motor_right] = 0;
-                		motor[motor_left] = 0;
-                		operating_state = CONNECTION;
-                		break;
+                			motor[motor_right] = 0;
+                			motor[motor_left] = 0;
+                			operating_state = CONNECTION;
+                			break;
                 		} else if (SensorValue(sonarSensor) < connection_dist - 2)
                 				{
-                				motor[motor_right] = 0;
-                				motor[motor_left] = 0;
-                				operating_state = DRIVE_BACKUP;
+                					motor[motor_right] = 0;
+                					motor[motor_left] = 0;
+                					delay(200);
+                					if (SensorValue(sonarSensor) < connection_dist - 2)
+                						{
+                							operating_state = DRIVE_BACKUP;
+                						}
                 				break;
-                				}else
-                				{
+                		}else
+                		{
                 				if (monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD &&
                 						monitorLightShortLeft() < SHORT_IR_SENSOR_THRESHOLD)
                 						{
                 						if (long_dif < pos_threshold && long_dif > neg_threshold)
                 							 {
-                							 motor[motor_right] = -40;
-                							 motor[motor_left] = -35;
+                							 motor[motor_right] = -35;
+                							 motor[motor_left] = -30;
                 							 break;
                 							 } else if (long_dif > pos_threshold)
                 							 	 {
                 							 	 motor[motor_right] = -30;
-                							 	 motor[motor_left] = -55;
+                							 	 motor[motor_left] = -35;
                 							 	 break;
                 							 	 } else if (long_dif < neg_threshold)
                 							 	 {
-                							 	 motor[motor_right] = -60;
+                							 	 motor[motor_right] = -40;
                 							 	 motor[motor_left] = -30;
                 							 	 break;
                 							 	 }
