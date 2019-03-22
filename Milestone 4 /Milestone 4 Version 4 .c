@@ -32,6 +32,15 @@ enum T_Operating_State  {
 
 int connection_dist = 13;
 
+
+/***************************************************************************************
+ *    Title: LightDetector.c
+ *    Author: University of Victoria
+ *    Date: 15 February 2019
+ *    Code version: 1.0
+ *    Availability: https://coursespaces.uvic.ca/pluginfile.php/1780177/course/section/453310/LightDetector.c
+ ***************************************************************************************/
+
 int monitorLightShortRight()
 {
     static int minLevelIR1 = 4096;    // Minimum light level seen by IR sensor 1
@@ -169,9 +178,7 @@ task main()
 
     // allows 600 msecs for microcontroller to initialize
     delay(600);
-		SensorValue(RedLED) = OFF;
-		SensorValue(BlueLED) = OFF;
-		SensorValue(YellowLED) = OFF;
+    
     // resets all sensor values and variables initially to prevent potential error
     clearTimer(T1);
 
@@ -185,25 +192,28 @@ task main()
 
     while(operating_state != STOP)
     {
-
         switch (operating_state) {
+                
                 // Search for location of beacon
             case SEARCH_BEACON:
                 // Will having no short ir values stop the long from working?
                 if (monitorLightLongRight() >= LONG_IR_SENSOR_THRESHOLD  ||
                     monitorLightLongLeft() >= LONG_IR_SENSOR_THRESHOLD)
                 {
-                	
                     // Sensor has found the robot
                     motor[motor_right] = 0;
                     motor[motor_left] = 0;
+                    // Allow time for motors to stop moving
+                    // Switching instantly from SEARCH_BEACON to DRIVE_TO_BEACON does...
+                    // ...not give the motors enough time to stop moving decreasing accuracy
                     delay(300);
                     operating_state = DRIVE_TO_BEACON;
                     break;
 
                 } else if(monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD  &&
-                    			monitorLightLongLeft() < LONG_IR_SENSOR_THRESHOLD)
+                          monitorLightLongLeft() < LONG_IR_SENSOR_THRESHOLD)
                 {
+                    // Robot has not yet found the beacon, continue searching
                     motor[motor_right] = 25;
                     motor[motor_left] = -25;
                     operating_state = SEARCH_BEACON;
@@ -213,153 +223,169 @@ task main()
                 // Drive towards beacon
             case DRIVE_TO_BEACON:
 
-								int short_dif = monitorLightShortRight() - monitorLightShortLeft();
-								int long_dif = monitorLightLongRight() - monitorLightLongLeft();
+                int short_dif = monitorLightShortRight() - monitorLightShortLeft();
+                int long_dif = monitorLightLongRight() - monitorLightLongLeft();
 
-								int pos_threshold = 50;
-								int neg_threshold = -50;
+                // Adjustable thresholds to set accuracy of the robots travel (less = straighter)
+                int pos_threshold = 50;
+                int neg_threshold = -50;
 
 
-								// If no IR reading it returns to SEARCH_BEACON state
+                // If no IR reading it returns to SEARCH_BEACON state
                 if (monitorLightLongRight() < LONG_IR_SENSOR_THRESHOLD &&
                     monitorLightLongLeft() < LONG_IR_SENSOR_THRESHOLD)
-                		{
+                    {
                 		operating_state = SEARCH_BEACON;
                 		break;
-                		}
+                    }
+                
                 if (SensorValue(sonarSensor) <= connection_dist + 3 &&
                 		SensorValue(sonarSensor) >= connection_dist - 2 &&
                 		monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD &&
                 		monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD)
                 		{
+                            // Robot is in the connection area stop motors
                 			motor[motor_right] = 0;
                 			motor[motor_left] = 0;
                 			operating_state = CONNECTION;
                 			break;
+                            
                 		} else if (SensorValue(sonarSensor) < connection_dist - 2)
-                				{
-                					motor[motor_right] = 0;
-                					motor[motor_left] = 0;
-                					delay(200);
-                					if (SensorValue(sonarSensor) < connection_dist - 2)
-                						{
-                							operating_state = DRIVE_BACKUP;
-                						}
-                				break;
+                        {
+                            // Robot too close, double check position then go to backup
+                            motor[motor_right] = 0;
+                            motor[motor_left] = 0;
+                            delay(200);
+                            if (SensorValue(sonarSensor) < connection_dist - 2)
+                            {
+                                // If the robot is still too close switch to DRIVE_BACKUP
+                                // Moving objects infront of sonar sensor could give false positives...
+                                // ...adjust the delay to prevent this
+                                operating_state = DRIVE_BACKUP;
+                            }
+                            break;
+                            
                 		}else
                 		{
-                				if (monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD &&
-                						monitorLightShortLeft() < SHORT_IR_SENSOR_THRESHOLD)
-                						{
-                						if (long_dif < pos_threshold && long_dif > neg_threshold)
-                							 {
-                							 motor[motor_right] = -35;
-                							 motor[motor_left] = -30;
-                							 break;
-                							 } else if (long_dif > pos_threshold)
-                							 	 {
-                							 	 motor[motor_right] = -30;
-                							 	 motor[motor_left] = -35;
-                							 	 break;
-                							 	 } else if (long_dif < neg_threshold)
-                							 	 {
-                							 	 motor[motor_right] = -40;
-                							 	 motor[motor_left] = -30;
-                							 	 break;
-                							 	 }
-                						} else
-                							{
-                							if (short_dif < pos_threshold && short_dif > neg_threshold)
-                								 {
-                								 motor[motor_right] = -29;
-                								 motor[motor_left] = -25;
-                								 break;
-                								 } else if (short_dif > pos_threshold)
-                								 	 {
-                								 	 motor[motor_right] = 20;
-                								 	 motor[motor_left] = -20;
-                								 	 break;
-                								   } else if (short_dif < neg_threshold)
-                								 	 {
-                								 	 motor[motor_right] = -20;
-                								 	 motor[motor_left] = 20;
-                								 	 break;
-                								 	 }
-                							}//else
-												}//else
-
-
+                            if (monitorLightShortRight() < SHORT_IR_SENSOR_THRESHOLD &&
+                                monitorLightShortLeft() < SHORT_IR_SENSOR_THRESHOLD)
+                            {
+                                if (long_dif < pos_threshold && long_dif > neg_threshold)
+                                {
+                                    // The robot is pretty much straight, keep going forward
+                                    motor[motor_right] = -35;
+                                    motor[motor_left] = -30;
+                                    break;
+                                } else if (long_dif > pos_threshold)
+                                {
+                                    // Robot too far to the right, turn left more
+                                    motor[motor_right] = -30;
+                                    motor[motor_left] = -35;
+                                    break;
+                                } else if (long_dif < neg_threshold)
+                                {
+                                    // Robot too far to the left, turn right more
+                                    motor[motor_right] = -40;
+                                    motor[motor_left] = -30;
+                                    break;
+                                }// if (for differentiation of long sensors)
+                            } else
+                            {
+                                if (short_dif < pos_threshold && short_dif > neg_threshold)
+                                {
+                                    // Robot is withing threshold travel straight
+                                    motor[motor_right] = -29;
+                                    motor[motor_left] = -25;
+                                    break;
+                                } else if (short_dif > pos_threshold)
+                                {
+                                    // Robot too far right, turn left
+                                    motor[motor_right] = 20;
+                                    motor[motor_left] = -20;
+                                    break;
+                                } else if (short_dif < neg_threshold)
+                                {
+                                    // robot too far left, turn right
+                                    motor[motor_right] = -20;
+                                    motor[motor_left] = 20;
+                                    break;
+                                }
+                            }//else (for short differentiation of sensors)
+                        }//else (if robot is too far away from the beacon to connect)
 
             case DRIVE_BACKUP:
                 // Backup until within range
                 // Endgoal to switch into connection state
-            		int ShortDif = monitorLightShortRight() - monitorLightShortLeft();
+                int ShortDif = monitorLightShortRight() - monitorLightShortLeft();
 
-            		if (monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD||
+                if (monitorLightShortRight() > SHORT_IR_SENSOR_THRESHOLD||
                     monitorLightShortLeft() > SHORT_IR_SENSOR_THRESHOLD ||
                     monitorLightLongRight() > LONG_IR_SENSOR_THRESHOLD  ||
                     monitorLightLongLeft() > LONG_IR_SENSOR_THRESHOLD)
+                {
+                    if (SensorValue(sonarSensor) < connection_dist - 3)
                     {
-                    	if (SensorValue(sonarSensor) < connection_dist - 3)
-                    	{
+                        // Backup straight to get withing zone
                     	motor[motor_right] = 29;
                     	motor[motor_left] = 25;
                     	break;
 
-                 			}	else if (SensorValue(sonarSensor) >= connection_dist - 1 &&
-                 								 SensorValue(sonarSensor) <= connection_dist + 3)
-                  			{
-                  			if (ShortDif < 50 && ShortDif > - 50)
-                  				{
+                    } else if (SensorValue(sonarSensor) >= connection_dist - 1 &&
+                               SensorValue(sonarSensor) <= connection_dist + 3)
+                    {
+                        if (ShortDif < 50 && ShortDif > - 50)
+                        {
                         	// Robot is in connection zone
                         	motor[motor_left] = 0;
                         	motor[motor_right] = 0;
                         	operating_state = CONNECTION;
-													break;
-													} else
-															{
-															operating_state = DRIVE_TO_BEACON;
-															break;
-															}
-												}
-                		} else
-                			{
-                			operating_state = SEARCH_BEACON;
-                			break;
-                			}
+                            break;
+                        } else
+                        {
+                            // Robot is too far away drive forward
+                            operating_state = DRIVE_TO_BEACON;
+                            break;
+                        }
+                    }// else if (sonar is withing the connection_dist give or take a few cm)
+                } else
+                {
+                    // If no sensor has a reading of the beacon, go back to search
+                    operating_state = SEARCH_BEACON;
+                    break;
+                }
                 break;
 
-                // Operate the arm to make beacon connection
+            // Operate the arm to make beacon connection
             case CONNECTION:
                 // Move arm down towards the beacon then switch states
                 motor[motor_arm] = -30;
                 delay(2050);
               	motor[motor_arm] = 0;
 
+                // Back out of the beacon area
                 operating_state = REVERSE;
-
                 break;
+                
                // Reverse from the beacon
             case REVERSE:
                 //Drive backwards then switch into stop state
-								motor[motor_left] = 30;
-								motor[motor_right] = 30;
-								delay(1300);
+                motor[motor_left] = 30;
+                motor[motor_right] = 30;
+                delay(1300);
                 operating_state = STOP;
                 break;
 
                 // Stop operating, task finished
             case STOP:
 
-            		motor[motor_left] = 0;
-								motor[motor_right] = 0;
-								// SensorValue(RedLED) = ON;
+                motor[motor_left] = 0;
+                motor[motor_right] = 0;
                 // Sound buzzers...
                 break;
-                // Should not happen
+                
             default:
+                // Should not happen
                 break;
-        }
+        }// switch
     } // while
-
-}
+}// task main
